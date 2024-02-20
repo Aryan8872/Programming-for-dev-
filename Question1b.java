@@ -1,32 +1,26 @@
-import java.util.Arrays;
-
 public class Question1b {
-
-    public static int minTimeToBuildEngines(int[] engines, int splitCost) {
-        int n = engines.length;
-        Arrays.sort(engines); // Sort engines in non-ascending order
-        int totalTime = 0;
-        int engineers = 1; // Start with one engineer
-
-        for (int i = n - 1; i >= 0; i--) {
-            // If there's only one engineer and more than one engine, split the engineer
-            if (engineers == 1 && i < n - 1) {
-                int splitTime = splitCost;
-                totalTime += splitTime;
-                engineers *= 2; // Double the number of engineers
+    // Method to calculate the minimum time required to construct engines
+    public static int findMinimumConstructionTime(int[] constructionDurations, int splitExpense) {
+        int totalDuration = 0;
+        // Iterate through each engine construction duration
+        for (int duration : constructionDurations) {
+            // Check if splitting the construction time reduces the total duration
+            if (splitExpense + duration / 2 < duration) {
+                // If splitting reduces time, add split expense to total duration
+                totalDuration += splitExpense;
             } else {
-                totalTime += engines[i]; // Assign the engineer(s) to build the engines
+                // Otherwise, add full construction duration to total duration
+                totalDuration += duration;
             }
         }
-
-        return totalTime;
+        return totalDuration;
     }
 
     public static void main(String[] args) {
-        int[] engines = {1, 2, 3};
-        int splitCost = 1;
+        int[] constructionDurations = {1, 2, 3}; // Array representing construction durations of engines
+        int splitExpense = 1; // Cost to split construction time
 
-        int minTime = minTimeToBuildEngines(engines, splitCost);
-        System.out.println("Minimum time needed to build all engines: " + minTime);
+        // Calculate and print the minimum time to construct engines
+        System.out.println("Minimum time to construct engines: " + findMinimumConstructionTime(constructionDurations, splitExpense));
     }
 }

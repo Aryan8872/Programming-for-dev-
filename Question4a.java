@@ -1,92 +1,77 @@
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Question4a {
-    public int collectKeys(char[][] grid) {
-        int m = grid.length;
-        int n = grid[0].length;
-        int[] start = new int[2]; // Store the starting position
-        int totalKeys = 0; // Count the total number of keys in the maze
+    // Function to find the minimum number of moves to collect all keys
+    public static int findMinimumMovesToCollectAllKeys(String[] maze) {
+        int rows = maze.length;
+        int cols = maze[0].length();
+        int targetKeys = 0;
+        int startX = 0, startY = 0;
 
-        // Find the starting position and count the total number of keys
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                if (grid[i][j] == 'S') {
-                    start[0] = i;
-                    start[1] = j;
-                } else if (grid[i][j] >= 'a' && grid[i][j] <= 'z') {
-                    totalKeys++;
+        // Find the starting point and target keys
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                char cell = maze[i].charAt(j);
+                if (cell == 'S') {
+                    startX = i;
+                    startY = j;
+                } else if (cell == 'E') {
+                    targetKeys |= (1 << ('f' - 'a'));
+                } else if (cell >= 'a' && cell <= 'f') {
+                    targetKeys |= (1 << (cell - 'a'));
                 }
             }
         }
 
-        Queue<int[]> queue = new LinkedList<>(); // Queue for BFS traversal
-        Set<String> visited = new HashSet<>(); // Set to keep track of visited cells
-        queue.offer(new int[]{start[0], start[1], 0}); // {x, y, keys}
-        visited.add(start[0] + "," + start[1] + ",0");
+        Queue<int[]> queue = new LinkedList<>();
+        boolean[][][] visited = new boolean[rows][cols][1 << 6];
+        queue.offer(new int[] { startX, startY, 0, 0 });
 
-        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-        int steps = 0; // Variable to count the number of steps
+        int[][] directions = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
 
+        // Perform BFS to explore the maze
         while (!queue.isEmpty()) {
-            int size = queue.size();
-            for (int i = 0; i < size; i++) {
-                int[] curr = queue.poll();
-                int x = curr[0];
-                int y = curr[1];
-                int keys = curr[2];
+            int[] current = queue.poll();
+            int x = current[0];
+            int y = current[1];
+            int keys = current[2];
+            int steps = current[3];
+            
+            // If all keys are collected, return the number of steps
+            if (keys == targetKeys) {
+                return steps;
+            }
+            
+            // Explore neighboring cells
+            for (int[] dir : directions) {
+                int newX = x + dir[0];
+                int newY = y + dir[1];
+                if (newX >= 0 && newX < rows && newY >= 0 && newY < cols && maze[newX].charAt(newY) != 'W') {
+                    char cell = maze[newX].charAt(newY);
+                    if (cell == 'E' || cell == 'P' || (cell >= 'a' && cell <= 'f')
+                            || (cell >= 'A' && cell <= 'F' && (keys & (1 << (cell - 'A'))) != 0)) {
+                        int newKeys = keys;
+                        if (cell >= 'a' && cell <= 'f') {
+                            newKeys |= (1 << (cell - 'a'));
+                        }
 
-                // If all keys are collected, return the number of steps
-                if (keys == (1 << totalKeys) - 1) {
-                    return steps;
-                }
-
-                // Explore all four directions
-                for (int[] dir : directions) {
-                    int newX = x + dir[0];
-                    int newY = y + dir[1];
-
-                    // Check if the new position is within the maze boundaries and is not a wall
-                    if (newX >= 0 && newX < m && newY >= 0 && newY < n && grid[newX][newY] != 'W') {
-                        char cell = grid[newX][newY];
-
-                        // If the cell is an empty path or a key
-                        if (cell == 'P' || (cell >= 'a' && cell <= 'z')) {
-                            int newKeys = keys;
-                            // If the cell contains a key, update the keys bitmask
-                            if (cell >= 'a' && cell <= 'z') {
-                                newKeys |= 1 << (cell - 'a');
-                            }
-                            // If the new position hasn't been visited, add it to the queue
-                            if (!visited.contains(newX + "," + newY + "," + newKeys)) {
-                                queue.offer(new int[]{newX, newY, newKeys});
-                                visited.add(newX + "," + newY + "," + newKeys);
-                            }
-                        } 
-                        // If the cell is a locked door
-                        else if (cell >= 'A' && cell <= 'Z' && ((keys >> (cell - 'A')) & 1) == 1) {
-                            // Check if we have the corresponding key to unlock the door
-                            if (!visited.contains(newX + "," + newY + "," + keys)) {
-                                queue.offer(new int[]{newX, newY, keys});
-                                visited.add(newX + "," + newY + "," + keys);
-                            }
+                        if (!visited[newX][newY][newKeys]) {
+                            visited[newX][newY][newKeys] = true;
+                            queue.offer(new int[] { newX, newY, newKeys, steps + 1 });
                         }
                     }
                 }
             }
-            steps++; // Increment steps after exploring each level
         }
 
-        return -1; // Cannot collect all keys
+        return -1; // If all keys cannot be collected
     }
 
+    // Main method for testing
     public static void main(String[] args) {
-        Question4a solution = new Question4a();
-        char[][] grid = {
-            {'S', 'P', 'q', 'P', 'P'},
-            {'W', 'W', 'W', 'P', 'W'},
-            {'r', 'P', 'Q', 'P', 'R'}
-        };
-        int result = solution.collectKeys(grid);
-        System.out.println("Minimum number of moves required to collect all keys: " + result);
+        String[] maze = { "SPaPP", "WWWPW", "bPAPB" };
+        int result = findMinimumMovesToCollectAllKeys(maze);
+        System.out.println("Minimum number of moves: " + result);
     }
 }
